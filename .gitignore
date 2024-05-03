@@ -1,0 +1,9 @@
+# Ignore compiled Python Files
+*.pyc
+.python-version
+
+# Ignore system-specific files
+.DS_Store
+
+
+
