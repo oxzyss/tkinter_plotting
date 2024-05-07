@@ -123,7 +123,7 @@ class PlotFrame(ttk.LabelFrame):
 
     def __init__(self, parent, console_frame):
         super().__init__(parent, text="Select Plot")
-        self.plot_types = ["correlation_coefficent",
+        self.plot_types = ["correlation_coefficient",
                            "correlation_magnitude", "correlation_phase",
                            "spectrum", "waterfall", "rms"]
         self.console_frame = console_frame
@@ -222,6 +222,7 @@ class Frame(ttk.Frame):
                 self.Plot = Plot(plot_type, data_file, channels, self.console_frame)
             else:
                 self.Plot.update(plot_type, data_file, channels)
+
             self.Plot.plot_data()
         else:
             if len(channels) == 0:
