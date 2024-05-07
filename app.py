@@ -1,9 +1,8 @@
 import os
 import tkinter as tk
-from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
-from plots import Plot
+from utils.plots import Plot
 
 DATA_DIRECTORY = '/Users/wayan/asiaa/tkinter_plotting/test_data'
 PADX = 20
@@ -16,7 +15,7 @@ class DirectoryFrame(ttk.LabelFrame):
     Define DirectoryFrame for navigating and selecting directory items
     '''
 
-    def __init__(self, parent, console_frame):
+    def __init__(self, parent, data_directory, console_frame):
         super().__init__(parent, text='Directory')
         self.selected_files = []
         self.console_frame = console_frame
@@ -27,7 +26,7 @@ class DirectoryFrame(ttk.LabelFrame):
 
         self.selected_directory = None
         self.data_file = [None]
-        self.data_path = '/Users/wayan/asiaa/tkinter_plotting/test_data'
+        self.data_path = data_directory
 
         self.select_button = ttk.Button(self, text="Select Directory",
                                         command=lambda: self.select_directory())
@@ -185,14 +184,14 @@ class Frame(ttk.Frame):
     Define the Frame that will be the notebooks first tab named "Tab"
     '''
 
-    def __init__(self, parent):
+    def __init__(self, parent, data_directory):
         super().__init__(parent)
 
         self.Plot = None
         self.console_frame = ConsoleFrame(self)
         self.console_frame.grid(column=0, row=1, padx=PADX, pady=PADY)
         # Setup frames inside of main frame
-        self.directory_frame = DirectoryFrame(self, self.console_frame)
+        self.directory_frame = DirectoryFrame(self, data_directory, self.console_frame)
         self.directory_frame.grid(column=0, row=0, padx=PADX, pady=PADY)
 
         self.plot_frame = PlotFrame(self, self.console_frame)
@@ -240,7 +239,7 @@ class App(tk.Tk):
     The top level layout information is described here
     '''
 
-    def __init__(self):
+    def __init__(self, data_directory):
         super().__init__()
 
         # Configure the app
@@ -253,7 +252,7 @@ class App(tk.Tk):
 
         # create notebook and add frame
         notebook = ttk.Notebook(self)
-        notebook.add(Frame(self), text='Tab')
+        notebook.add(Frame(self, data_directory), text='Tab')
 
         # grid notebook
         notebook.grid(column=0, row=0, padx=PADX, pady=PADY, sticky="nsew")  # sticky="nsew" to make it fill the entire window
@@ -264,9 +263,19 @@ class App(tk.Tk):
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
+    import json
 
     parser = ArgumentParser()
+    parser.add_argument("config", help="The name/path of the config.json")
     args = parser.parse_args()
 
-    app = App()
+    config_file = args.config
+
+    with open(config_file, "r") as file:
+        json_content = file.read()
+        config = json.loads(json_content)
+
+    data_directory = config['data_directory']
+
+    app = App(data_directory)
     app.mainloop()

@@ -1,14 +1,12 @@
-import os
 import math
 import h5py
-import json
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
 # raw_adc=['/home/frbusr/data/current/raw_acq/000000']
-raw_adc = [
-    '/Users/wayan/asiaa/tkinter_plotting/test_data/20240220T224640Z_corr434/raw_acq']
+# raw_adc = [
+#    '/Users/wayan/asiaa/tkinter_plotting/test_data/20240220T224640Z_corr434/raw_acq']
 chan_one = 4
 chan_two = 12
 plot_type = "coeff"
@@ -30,27 +28,24 @@ class Plot():
         self.rawfpgacount = None
         self.rawdata = None
 
-    def update_data(self, plot_type, filepath, channels):
+    def update(self, plot_type, filepath, channels):
         self.plot_type = plot_type
         self.file_path = filepath
         self.channels = channels
- 
+
     def plot_data(self):
         '''
         Function to plot data, reads data from class initalization and
         determines what plot to generate
         '''
-        if os.path.isfile(self.file_path[0]):
-            self.console_frame.log('file path is a file')
-            self.rawtime, self.rawfpgacount, self.rawdata = self.read_raw_adc()
-        else:
-            self.console_frame.log(f'{self.file_path} is not a file')
-            return
+        self.rawtime, self.rawfpgacount, self.rawdata = self.read_raw_adc()
 
         self.console_frame.log(f'Plotting: {self.plot_type}')
         # Initial setup
         num_channels = len(self.channels)
         self.console_frame.log(f'num_channels: {num_channels}')
+
+        # This does not apply to correlation plots
         num_rows = math.ceil(num_channels / 4)
         num_cols = math.ceil(num_channels / num_rows)
 
@@ -59,40 +54,83 @@ class Plot():
         fig.suptitle(f"{self.plot_type}")
 
         if self.plot_type == "rms":
-            plt.subplots_adjust(hspace=0.6, left=0.05, right=0.92,
-                                wspace=0.3, top=0.935, bottom=0.08)
+            #plt.subplots_adjust(hspace=0.6, left=0.05, right=0.92,
+            #                    wspace=0.3, top=0.935, bottom=0.08)
             for i in range(1, num_channels + 1):
                 index = i - 1
                 self.plot_rms(self.rawdata, self.rawtime, self.channels[index])
         else:
-            plt.subplots_adjust(hspace=0.6, left=0.05, right=0.95,
-                                wspace=0.3, top=0.935, bottom=0.08)
-            for i in range(1, num_channels + 1):
-                index = i - 1
-                ax = fig.add_subplot(num_rows, num_cols, i)
+            #plt.subplots_adjust(hspace=0.6, left=0.05, right=0.95,
+            #                    wspace=0.3, top=0.935, bottom=0.08)
+            corr_rows, corr_cols = self.get_num_pairs_total(num_channels)
+            corr_index = 1
+            for i in range(num_channels):
+                subplot_index = i + 1
 
-                if self.plot_type == "spectrum":
-                    self.plot_spectrum(
-                            self.rawdata, self.rawtime, self.channels[index])
+                if (self.plot_type == "correlation_coefficient" or self.plot_type == "correlation_magnitude"
+                        or self.plot_type == "correlation_phase"):
 
-                elif self.plot_type == "waterfall":
-                    self.plot_waterfall(self.rawdata, self.rawtime,
-                                        self.channels[index])
+                    for j in range(i+1, num_channels):
+                        ax = fig.add_subplot(corr_rows, corr_cols, corr_index)
+                        corr_index += 1
+                        chan_one = self.channels[i]
+                        chan_two = self.channels[j]
 
-                elif self.plot_type == "correlation_coefficient":
-                    self.plot_corr_coeff(self.rawdata, self.rawtime,
-                                         self.channels[index])
+                        self.console_frame.log(f'plotting channels: {
+                                               chan_one}, {chan_two}')
 
-                elif self.plot_type == "correlation_phase":
-                    self.plot_corr_phase(self.rawdata, self.rawtime,
-                                         self.channels[index])
+                        self.plot_correlation(self.rawdata, self.rawtime,
+                                              chan_one, chan_two, self.plot_type)
 
-                elif self.plot_type == "correlation_magnitude":
-                    self.plot_corr_magnitude(self.rawdata, self.rawtime,
-                                             self.channels[index])
+                else:
+                    ax = fig.add_subplot(num_rows, num_cols, subplot_index)
+                    if self.plot_type == "spectrum":
+                        self.plot_spectrum(
+                            self.rawdata, self.rawtime, self.channels[i])
 
-
+                    elif self.plot_type == "waterfall":
+                        self.plot_waterfall(self.rawdata, self.rawtime,
+                                            self.channels[i])
+        self.plt.tight_layout()
         self.plt.show()
+
+    def plot_correlation(self, rawdata, rawtime, chan_one, chan_two, plot_type):
+        if plot_type == "correlation_coefficient":
+            self.plot_corr_coeff(rawdata, rawtime, chan_one, chan_two)
+
+        elif plot_type == "correlation_magnitude":
+            self.plot_corr_magnitude(rawdata, rawtime, chan_one, chan_two)
+
+        elif plot_type == "correlation_phase":
+            self.plot_corr_phase(rawdata, rawtime, chan_one, chan_two)
+
+    def get_num_pairs_total(self, num_channels):
+        '''
+        Helper function to get the number of unique pairs given the number
+        of selected channels and then return row and column length to display
+        even subplots
+        Combinations = C(n,r) = n! / (r! * (n-r)!)
+
+        return (row, col)
+        '''
+
+        # number of elements to choose at a time (2 for pairs)
+        r = 2
+        r_factorial = math.factorial(r)
+
+        n = num_channels
+        n_factorial = math.factorial(num_channels)
+
+        numerator = n_factorial
+        denominator = r_factorial * math.factorial(n - r)
+
+        num_pairs = numerator / denominator
+
+        num_rows = math.ceil(num_pairs / 4)
+        num_cols = math.ceil(num_pairs / num_rows)
+
+        print(f'num_pairs: {num_pairs}, row: {num_rows}, col: {num_cols}')
+        return (num_rows, num_cols)
 
     def read_raw_adc(self, verbose=1):
         """
@@ -172,6 +210,7 @@ class Plot():
 
         # correlation_matrix = np.corrcoef(fft_y1, fft_y2)
 
+        self.plt.title(f'channel {input_one} - {input_two}')
         self.plt.plot(f_MHz, np.abs(coeff_mean))
         # self.plt.plot(f_MHz[:min_length], correlation_coefficient[:min_length])
         # self.plt.plot(f_MHz, np.mean(correlation_coefficient, axis=0))
@@ -194,6 +233,7 @@ class Plot():
         # Calculate the magnitude of the cross-correlation
         magnitude_corr_y1y2 = np.abs(corr_y1y2)
 
+        self.plt.title(f'channel {input_one} - {input_two}')
         self.plt.plot(f_MHz, np.mean(magnitude_corr_y1y2, axis=0))
 
     def plot_corr_phase(self, rawdata, rawtime, input_one, input_two):
@@ -218,23 +258,24 @@ class Plot():
 
         # self.plt.plot(f_MHz[:min_length], phase_shift[:min_length])
         # self.plt.ylim(-4,4)
+        self.plt.title(f'channel {input_one} - {input_two}')
         self.plt.plot(f_MHz, np.mean(phase_shift, axis=0))
 
         # self.plt.ylim(-4,4)
 
     def plot_waterfall(self, rawdata, rawtime, channel):
         Ninput, Nframes, Framelength = rawdata.shape
-        #f_MHz = 800. - np.arange(1024)*400./1024.
+        # f_MHz = 800. - np.arange(1024)*400./1024.
         y = rawdata[channel, :]
 
         fft_im = np.abs(np.fft.fft(np.hamming(Framelength) *
                         (y-np.mean(y, axis=1)[:, np.newaxis]), axis=1))**2
         vmin, vmax = np.percentile(fft_im, [1, 99])
-        plt.imshow(fft_im[:, 1024:], vmin=vmin, vmax=vmax, extent=[400, 800, 0, rawtime[-1]-rawtime[0]],
-                   aspect='auto')
-        plt.xlabel('MHz')
-        plt.ylabel('Time (s)')
-        plt.title('input %d' % channel)
+        self.plt.imshow(fft_im[:, 1024:], vmin=vmin, vmax=vmax, extent=[400, 800, 0, rawtime[-1]-rawtime[0]],
+                        aspect='auto')
+        self.plt.xlabel('MHz')
+        self.plt.ylabel('Time (s)')
+        self.plt.title('input %d' % channel)
 
     def plot_spectrum(self, rawdata, rawtime, the_input):
         Ninput, Nframes, Framelength = rawdata.shape
@@ -253,59 +294,11 @@ class Plot():
     def plot_rms(self, rawdata, rawtime, channel):
         rawrms = np.std(rawdata, axis=2)
         rawrms.shape
-        plt.plot(rawtime-rawtime[0], rawrms[channel,:], label=channel)
+        self.plt.plot(rawtime-rawtime[0], rawrms[channel, :], label=channel)
 
-        plt.legend(loc=(1.02,0.0))
-        plt.ylabel('RMS of each input')
-        plt.xlabel('time (s)')
-
-# plot RMS:
-# rawrms = np.std(rawdata_all, axis=2)
-# rawrms.shape
-# for i in range(0,16):
-#    plt.plot(rawtime-rawtime[0], rawrms[i,:], label=i)
-# plt.legend(loc=(1.02,0.0))
-# plt.ylabel('RMS of each input')
-# plt.xlabel('time (s)')
-# dt=datetime.fromtimestamp(np.mean(rawtime))
-# plt.savefig('%s_rms_inputs.png'%dt.strftime("%Y%m%dT%H%M%S"), format='png',bbox_inches='tight',dpi=100)
-#
-# print ('Produced RMS plot: %s_rms_inputs.png'%dt.strftime("%Y%m%dT%H%M%S"))
-#
-# def plot_waterfall(rawdata, rawtime, the_input):
-#    Ninput, Nframes, Framelength = rawdata.shape
-#    f_MHz = 800. - np.arange(1024)*400./1024.
-#    y = rawdata[the_input,:]
-#
-#    fft_im = np.abs(np.fft.fft(np.hamming(Framelength)*(y-np.mean(y, axis=1)[:, np.newaxis]), axis=1))**2
-#    vmin, vmax=np.percentile(fft_im, [1,99])
-#    plt.imshow(fft_im[:,1024:], vmin=vmin, vmax=vmax, extent=[400,800,0,rawtime[-1]-rawtime[0]],
-#               aspect='auto')
-#    plt.xlabel('MHz')
-#    plt.ylabel('Time (s)')
-#    plt.title('input %d'%the_input)
-#
-# fig=plt.figure(figsize=(10,10))
-# for i in range(0,16):
-#    rect=[0.27*(i%4), -0.27*(i//4), 0.2, 0.2]
-#    fig.add_axes(rect)
-#    frame1=plt.gca()
-#    plot_spectrum(rawdata_all, rawtime, i)
-#
-# plt.savefig('%s_all_inputs_spectra.png'%dt.strftime("%Y%m%dT%H%M%S"), format='png',bbox_inches='tight',dpi=100)
-#
-# print ('Produced spectrum plot: %s_all_inputs_spectra.png'%dt.strftime("%Y%m%dT%H%M%S"))
-#
-#
-# fig=plt.figure(figsize=(10,10))
-# for i in range(0,16):
-#    rect=[0.27*(i%4), -0.27*(i//4), 0.2, 0.2]
-#    fig.add_axes(rect)
-#    frame1=plt.gca()
-#    plot_waterfall(rawdata_all, rawtime, i)
-#
-# plt.savefig('%s_all_inputs_waterfall.png'%dt.strftime("%Y%m%dT%H%M%S"), format='png',bbox_inches='tight',dpi=100)
-# print ('Produced waterfall plot: %s_all_inputs_waterfall.png'%dt.strftime("%Y%m%dT%H%M%S"))
+        self.plt.legend(loc=(1.02, 0.0))
+        self.plt.ylabel('RMS of each input')
+        self.plt.xlabel('time (s)')
 
 
 if __name__ == "__main__":
