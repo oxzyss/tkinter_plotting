@@ -35,6 +35,11 @@ class DirectoryFrame(ttk.LabelFrame):
         self.populate_file_list(self.data_path)
 
     def select_directory(self):
+        '''
+        Function that is called when user clicks on Select Directory Button. 
+        Opens a dialog window to allow user to select deeper in the selected
+        directory
+        '''
         target = os.path.join(self.data_path, self.selected_directory)
         file = filedialog.askopenfilename(initialdir=target)
 
@@ -43,29 +48,26 @@ class DirectoryFrame(ttk.LabelFrame):
             self.data_file[0] = file
 
     def on_select_directory(self, event):
+        '''
+        Function that is called when user selects a listed directory. Updates
+        self.selected_directory
+        '''
         selected_index = self.directory_listbox.curselection()
         if selected_index:
             self.selected_directory = self.directory_listbox.get(selected_index)
             self.console_frame.log(f"Selected directory: {self.selected_directory}")
 
     def populate_file_list(self, directory):
+        '''
+        Function is called when Directory Frame is initialized. Populates the
+        file listbox
+        '''
         self.console_frame.log("Setting directory")
         if os.path.isdir(directory):
             data_folders = os.listdir(directory)
             for folder in data_folders:
                 if os.path.isdir(os.path.join(directory, folder)):
                     self.directory_listbox.insert(tk.END, folder)
-
-    def select_files(self):
-        files = filedialog.askopenfilenames()
-        if files:
-            self.selected_files = files
-            self.update_file_list()
-
-    def update_file_list(self):
-        self.directory_listbox.delete(0, tk.END)
-        for file in self.selected_files:
-            self.directory_listbox.insert(tk.END, file)
 
     def get_datafile(self):
         return self.data_file
@@ -86,6 +88,9 @@ class ChannelFrame(ttk.LabelFrame):
         self.testButton.grid(row=1, column=0)
 
     def setup(self):
+        '''
+        Function for initializing checkbuttons for users to select
+        '''
         total_channels = 16
         row = 0
         col = 0
@@ -105,13 +110,15 @@ class ChannelFrame(ttk.LabelFrame):
                 col = 0
 
     def get_channels(self):
+        '''
+        Called when user wants to finalize the channel selection
+        '''
         channels = []
         for i, var in enumerate(self.checkbox_vars):
             if var.get():
                 channels.append(int(i))
 
         channel_string = ','.join(str(c) for c in channels)
-        print(channel_string)
         self.console_frame.log(f'Selected Channels: {channel_string}')
 
         return channels
@@ -132,6 +139,9 @@ class PlotFrame(ttk.LabelFrame):
         self.generate_plot_options()
 
     def generate_plot_options(self):
+        '''
+        Create checkboxes based on plot_types upon initialization
+        '''
         row = 0
         col = 0
         selected_option = tk.StringVar()
@@ -151,7 +161,7 @@ class PlotFrame(ttk.LabelFrame):
 
 class ConsoleFrame(ttk.LabelFrame):
     '''
-    Console frame for showing actions
+    Console frame for logging actions
     '''
 
     def __init__(self, parent):
@@ -182,6 +192,8 @@ class ConsoleFrame(ttk.LabelFrame):
 class Frame(ttk.Frame):
     '''
     Define the Frame that will be the notebooks first tab named "Tab"
+    This is the base frame for all UI elements. Handles the plotting by
+    gathering data from all child frames to generate a matplotlib plot
     '''
 
     def __init__(self, parent, data_directory):
@@ -265,7 +277,8 @@ class App(tk.Tk):
 if __name__ == '__main__':
     from argparse import ArgumentParser
     import json
-
+    
+    # Parse arguements for data directory
     parser = ArgumentParser()
     parser.add_argument("config", help="The name/path of the config.json")
     args = parser.parse_args()
