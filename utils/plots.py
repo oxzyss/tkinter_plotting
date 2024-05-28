@@ -95,6 +95,9 @@ class Plot():
         self.plt.show()
 
     def plot_correlation(self, rawdata, rawtime, chan_one, chan_two, plot_type):
+        '''
+        Helper function to parse plot type for correlation plots
+        '''
         if plot_type == "correlation_coefficient":
             self.plot_corr_coeff(rawdata, rawtime, chan_one, chan_two)
 
@@ -129,7 +132,7 @@ class Plot():
         num_rows = math.ceil(num_pairs / 4)
         num_cols = math.ceil(num_pairs / num_rows)
 
-        print(f'num_pairs: {num_pairs}, row: {num_rows}, col: {num_cols}')
+        #print(f'num_pairs: {num_pairs}, row: {num_rows}, col: {num_cols}')
         return (num_rows, num_cols)
 
     def read_raw_adc(self, verbose=1):
@@ -189,6 +192,9 @@ class Plot():
         return rawtime, rawfpgacount, rawdata
 
     def plot_corr_coeff(self, rawdata, rawtime, input_one, input_two):
+        '''
+        Correlation Coefficient plot
+        '''
         Ninput, Nframes, Framelength = rawdata.shape
         f_MHz = 800. - np.arange(1024)*400./1024.
         y1 = rawdata[input_one, :]
@@ -216,6 +222,9 @@ class Plot():
         # self.plt.plot(f_MHz, np.mean(correlation_coefficient, axis=0))
 
     def plot_corr_magnitude(self, rawdata, rawtime, input_one, input_two):
+        '''
+        Correlation Magnitude plot
+        '''
         Ninput, Nframes, Framelength = rawdata.shape
         f_MHz = 800. - np.arange(1024)*400./1024.
         y1 = rawdata[input_one, :]
@@ -237,6 +246,9 @@ class Plot():
         self.plt.plot(f_MHz, np.mean(magnitude_corr_y1y2, axis=0))
 
     def plot_corr_phase(self, rawdata, rawtime, input_one, input_two):
+        '''
+        Correlation Phase plot
+        '''
         Ninput, Nframes, Framelength = rawdata.shape
         f_MHz = 800. - np.arange(1024)*400./1024.
         y1 = rawdata[input_one, :]
@@ -264,6 +276,9 @@ class Plot():
         # self.plt.ylim(-4,4)
 
     def plot_waterfall(self, rawdata, rawtime, channel):
+        '''
+        Waterfall plot
+        '''
         Ninput, Nframes, Framelength = rawdata.shape
         # f_MHz = 800. - np.arange(1024)*400./1024.
         y = rawdata[channel, :]
@@ -278,6 +293,9 @@ class Plot():
         self.plt.title('input %d' % channel)
 
     def plot_spectrum(self, rawdata, rawtime, the_input):
+        '''
+        Spectrum plot
+        '''
         Ninput, Nframes, Framelength = rawdata.shape
         f_MHz = 800. - np.arange(1024)*400./1024.
         y = rawdata[the_input, :]
@@ -292,6 +310,9 @@ class Plot():
         self.plt.title('input %d' % (the_input + 1))
 
     def plot_rms(self, rawdata, rawtime, channel):
+        '''
+        Real mean squared plot
+        '''
         rawrms = np.std(rawdata, axis=2)
         rawrms.shape
         self.plt.plot(rawtime-rawtime[0], rawrms[channel, :], label=channel)
