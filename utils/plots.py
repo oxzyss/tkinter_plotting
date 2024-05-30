@@ -76,8 +76,7 @@ class Plot():
                         chan_one = self.channels[i]
                         chan_two = self.channels[j]
 
-                        self.console_frame.log(f'plotting channels: {
-                                               chan_one}, {chan_two}')
+                        self.console_frame.log(f'plotting channels: {chan_one}, {chan_two}')
 
                         self.plot_correlation(self.rawdata, self.rawtime,
                                               chan_one, chan_two, self.plot_type)
