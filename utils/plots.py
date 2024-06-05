@@ -214,8 +214,11 @@ class Plot():
         coeff_mean = np.mean(corr_coeff, axis=0)
 
         # correlation_matrix = np.corrcoef(fft_y1, fft_y2)
+        # 0-1
 
         self.plt.title(f'channel {input_one} - {input_two}')
+        self.plt.xlabel('MHz')
+        self.plt.ylabel('0-1')
         self.plt.plot(f_MHz, np.abs(coeff_mean))
         # self.plt.plot(f_MHz[:min_length], correlation_coefficient[:min_length])
         # self.plt.plot(f_MHz, np.mean(correlation_coefficient, axis=0))
@@ -241,7 +244,10 @@ class Plot():
         # Calculate the magnitude of the cross-correlation
         magnitude_corr_y1y2 = np.abs(corr_y1y2)
 
+        # counts
         self.plt.title(f'channel {input_one} - {input_two}')
+        self.plt.xlabel('MHz')
+        self.plt.ylabel('Counts')
         self.plt.plot(f_MHz, np.mean(magnitude_corr_y1y2, axis=0))
 
     def plot_corr_phase(self, rawdata, rawtime, input_one, input_two):
@@ -269,7 +275,10 @@ class Plot():
 
         # self.plt.plot(f_MHz[:min_length], phase_shift[:min_length])
         # self.plt.ylim(-4,4)
+        # radians
         self.plt.title(f'channel {input_one} - {input_two}')
+        self.plt.xlabel('MHz')
+        self.plt.ylabel('Radians')
         self.plt.plot(f_MHz, np.mean(phase_shift, axis=0))
 
         # self.plt.ylim(-4,4)
