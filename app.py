@@ -65,7 +65,7 @@ class DirectoryFrame(ttk.LabelFrame):
         self.console_frame.log("Setting directory")
         if os.path.isdir(directory):
             data_folders = os.listdir(directory)
-            for folder in data_folders:
+            for folder in sorted(data_folders):
                 if os.path.isdir(os.path.join(directory, folder)):
                     self.directory_listbox.insert(tk.END, folder)
 
